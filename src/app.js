@@ -1,7 +1,8 @@
 import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
-import { MongoClient } from "mongodb"
+import { MongoClient, ObjectId } from "mongodb"
+import { participantRules, messageRules } from "./caracterSchemas.js"
 
 
 const PORT = 5000
