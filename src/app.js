@@ -26,7 +26,7 @@ const dbConnected = await mongoClient.connect()
 if (dbConnected) db = mongoClient.db()
 
 
-app.post('./participants', async (req, res) => {
+app.post('/participants', async (req, res) => {
     try {
         const participant = await participantRules.validateAsync(req.body)
 
