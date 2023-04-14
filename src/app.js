@@ -27,7 +27,7 @@ app.listen(PORT, () => {
     console.log(`Initialized server: port ${PORT}`);
 });
 
-app.post('./partipants', async (req, res) => {
+app.post('./participants', async (req, res) => {
     try {
         const participant = await participantRules.validateAsync(req.body)
 
