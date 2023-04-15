@@ -132,7 +132,7 @@ app.get("messages", async (req, res)=>{
             ]
         }).toArray()
 
-        if(query.limit){
+        if(message.limit){
             const limitMessages = Number(message.limit)
 
             if(limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
