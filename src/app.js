@@ -49,9 +49,9 @@ app.post('/participants', async (req, res) => {
     } catch (err) {
         console.log(err)
 
-        if (err.isJoi) return res.sendStatus(400)
+        if (err.isJoi) return res.sendStatus(422)
 
-        return res.sendStatus(500)
+        return res.sendStatus(201)
     }
 }) 
 
