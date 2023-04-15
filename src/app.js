@@ -2,13 +2,9 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import { MongoClient, ObjectId } from "mongodb"
-
-import { messageRules } from "./schemas/caracterSchemas"
-import { participantRules } from "./schemas/caracterSchemas"
-
 import dayjs from "dayjs"
-import { participantRules } from "./schemas/caracterSchemas.js"
-import { messageRules } from "./schemas/caracterSchemas.js"
+import { participantRules } from "./schemas/schemaParticipant.js"
+import { messageRules } from "./schemas/schemasMessage.js"
 
 const PORT = 5000
 const app = express()
