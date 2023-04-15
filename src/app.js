@@ -3,6 +3,7 @@ import cors from "cors"
 import dotenv from "dotenv"
 import { MongoClient, ObjectId } from "mongodb"
 import { participantRules, messageRules } from "./caracterSchemas.js"
+import dayjs from "dayjs"
 
 
 const PORT = 5000
@@ -90,4 +91,30 @@ app.post("/status", async (req, res) =>{
         }
 
 
+})
+
+app.post("/messages", async (req, res)=>{
+    try{
+            const message = await messageRules.validate(req.body)
+            const { user } = req.headers
+            const statusMessage = await db.collection("participants").findOne({name: user})
+
+            if(!statusMessage) return res.sendStatus(400)
+
+            const messagePosted = await db.collection("messages").insertOne({
+                from: user,...message,
+                time: dayjs().format('HH:mm:ss')
+
+            })
+
+            if(messagePosted) return res.sendStatus(200)
+
+    }catch{
+
+        console.log("deu ruim")
+
+        if(err.isJoi) return res.sendStatus(400)
+
+        return res,sendStatus(500)
+    }
 })
