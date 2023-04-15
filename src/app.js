@@ -118,3 +118,32 @@ app.post("/messages", async (req, res)=>{
         return res,sendStatus(500)
     }
 })
+
+app.get("messages", async (req, res)=>{
+    try{
+        const { message } = req
+        const { user } = req,headers
+
+        const messages = await db.collection("messages").find ({
+            $or:[
+                {from: user},
+                {to: user},
+                {to: "Todos"}
+            ]
+        }).toArray()
+
+        if(query.limit){
+            const limitMessages = Number(message.limit)
+
+            if(limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(400)
+
+            return res.send([...messages].slice(-limitMessages).reverse())
+        }
+
+        return res.send([...messages].reverse())
+    } catch{
+        console.log("deu ruim")
+
+        return res.sendStatus(500)
+    }
+})
