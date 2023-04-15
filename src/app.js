@@ -22,13 +22,14 @@ timeAtividade()
 
 const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
-const dbConnected = await mongoClient.connect()
+const dbWasConnected = await mongoClient.connect()
 
-if (dbConnected) db = mongoClient.db()
+if (dbWasConnected) db = mongoClient.db()
 
+app.post("/participants", async (req, res) => {
 
-app.post('/participants', async (req, res) => {
     try {
+
         const participant = await participantRules.validateAsync(req.body)
 
         const partipanteLocalizar = await db.collection("participants").findOne(participant)
@@ -42,7 +43,7 @@ app.post('/participants', async (req, res) => {
             to: 'Todos',
             text: 'entra na sala...',
             type: 'status',
-            time: dayjs().format('HH:mm:ss')
+            time: dayjs(Date.now()).format('HH:mm:ss')
         })
 
         return res.sendStatus(201)
@@ -55,7 +56,6 @@ app.post('/participants', async (req, res) => {
         return res.sendStatus(500)
     }
 })
-
 
 app.get("/participants", async (req, res) => {
 
@@ -73,7 +73,9 @@ app.get("/participants", async (req, res) => {
 app.post("/status", async (req, res) => {
 
     try {
+
         const { user } = req.headers
+
         const statusUser = await db.collection("participants").findOne({ name: user })
 
         if (!statusUser) return res.sendStatus(404)
@@ -81,36 +83,36 @@ app.post("/status", async (req, res) => {
         await db.collection("participants").updateOne({ name: user }, { $set: { lastStatus: Date.now() } })
 
         return res.sendStatus(200)
-        console.log("deu certo")
-    }
 
-    catch (erro) {
-        console.log("deu errado")
+    } catch (err) {
+        console, log(err)
 
         return res.sendStatus(500)
     }
-
-
 })
 
 app.post("/messages", async (req, res) => {
+
     try {
-        const message = await messageRules.validate(req.body)
+
+        const message = await messageRules.validateAsync(req.body)
+
         const { user } = req.headers
-        const statusMessage = await db.collection("participants").findOne({ name: user })
 
-        if (!statusMessage) return res.status(422).send("Usuário não encontrado ou não registrado")
+        const statusUser = await db.collection("participants").findOne({ name: user })
 
-        const messagePosted = await db.collection("messages").insertOne({
-            from: user, ...message,
-            time: dayjs().format('HH:mm:ss')
+        if (!statusUser) return res.sendStatus(422)
 
+        const messageWasPosted = await db.collection("messages").insertOne({
+            from: user,
+            ...message,
+            time: dayjs(Date.now()).format('HH:mm:ss')
         })
 
-        if (messagePosted) return res.sendStatus(201)
+        if (messageWasPosted) return res.sendStatus(201)
 
     } catch (err) {
-        console.error(err)
+        console.log(err)
 
         if (err.isJoi) return res.sendStatus(422)
 
@@ -119,34 +121,30 @@ app.post("/messages", async (req, res) => {
 })
 
 app.get("/messages", async (req, res) => {
+
     try {
-        const { message } = req
+        const { query } = req
         const { user } = req.headers
-
-        const messages = await db.collection("messages").find({
-            $or: [
-                { from: user },
-                { to: user },
-                { to: "Todos" }
-            ]
-        }).toArray()
-
-        if (message?.limit) {
-
-            const limitMessages = Number(message?.limit)
+        
+        const allMessages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
+        
+        if (query.limit) {
+            const limitMessages = Number(query.limit)
 
             if (limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
+            
+            return res.send([...allMessages].slice(-limitMessages).reverse())
+        }        
 
-            return res.send([...messages].slice(-limitMessages).reverse())
-        }
+        return res.send([...allMessages].reverse())
 
-        return res.send([...messages].reverse())
-    } catch (erro) {
-        console.log(erro)
+    } catch (err) {
+        console.log(err)
 
         return res.sendStatus(500)
     }
 })
+
 
 function timeAtividade() {
 
