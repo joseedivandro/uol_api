@@ -2,29 +2,28 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import { MongoClient, ObjectId } from "mongodb"
-import { participantRules, messageRules } from "./caracterSchemas.js"
 import dayjs from "dayjs"
-
+import { participantRules } from "./schemas/caracterSchemas.js"
+import { messageRules } from "./schemas/caracterSchemas.js"
 
 const PORT = 5000
 const app = express()
 let db
 
 dotenv.config()
-
 app.use(cors())
 app.use(express.json())
 app.listen(PORT, () => {
-    console.log(`Initialized server: port ${PORT}`)
+    console.log(`Servidor Rodando na porta:${PORT}`)
 })
 
 timeAtividade()
 
 const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
-const dbWasConnected = await mongoClient.connect()
+const dbConnected = await mongoClient.connect()
 
-if (dbWasConnected) db = mongoClient.db()
+if (dbConnected) db = mongoClient.db()
 
 app.post("/participants", async (req, res) => {
 
@@ -57,14 +56,14 @@ app.post("/participants", async (req, res) => {
     }
 })
 
-app.get("/participants", async (req, res) => {
+app.get("/participants", async (res) => {
 
     try {
         const participants = await db.collection("participants").find().toArray()
 
         return res.send(participants)
-    } catch (err) {
-        console.log(err)
+    } catch (erro) {
+        console.log(erro)
 
         return res.sendStatus(500)
     }
@@ -111,10 +110,10 @@ app.post("/messages", async (req, res) => {
 
         if (messageWasPosted) return res.sendStatus(201)
 
-    } catch (err) {
-        console.log(err)
+    } catch (erro) {
+        console.log(erro)
 
-        if (err.isJoi) return res.sendStatus(422)
+        if (erro.isJoi) return res.sendStatus(422)
 
         return res.sendStatus(500)
     }
@@ -147,36 +146,36 @@ app.get("/messages", async (req, res) => {
 
 
 function timeAtividade() {
+    const timeTolerance = 10000 // * in milliseconds
 
     setInterval(async () => {
 
-        const timeLimit = Date.now() - 15000
+        const timeBottomLimit = Date.now() - timeTolerance
 
         try {
             const participants = await db.collection("participants").find().toArray()
 
             participants.forEach(async (participant) => {
 
-                if (participant.lastStatus < timeLimit) {
+                if (participant.lastStatus < timeBottomLimit) {
 
                     await db.collection("participants").deleteOne({ _id: new ObjectId(participant._id) })
-
 
                     await db.collection("messages").insertOne({
                         from: participant.name,
                         to: 'Todos',
                         text: 'sai da sala...',
                         type: 'status',
-                        time: dayjs().format('HH:mm:ss')
+                        time: dayjs(Date.now()).format('HH:mm:ss')
                     })
                 }
             })
 
-        } catch (erro) {
-            console.log(erro)
+        } catch (err) {
+            console.log(err)
 
             return res.sendStatus(500)
         }
 
-    }, 15000)
+    }, timeTolerance)
 }
