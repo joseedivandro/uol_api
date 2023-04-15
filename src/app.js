@@ -54,7 +54,7 @@ app.post('/participants', async (req, res) => {
 
         return res.sendStatus(500)
     }
-}) 
+})
 
 
 app.get("/participants", async (req, res) => {
@@ -70,80 +70,79 @@ app.get("/participants", async (req, res) => {
     }
 })
 
-app.post("/status", async (req, res) =>{
+app.post("/status", async (req, res) => {
 
-        try{
-            const { user } = req.headers
-            const statusUser = await db.collection("participants").findOne({name:user})
+    try {
+        const { user } = req.headers
+        const statusUser = await db.collection("participants").findOne({ name: user })
 
-            if(!statusUser) return res.sendStatus(404)
+        if (!statusUser) return res.sendStatus(404)
 
-            await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()} })
+        await db.collection("participants").updateOne({ name: user }, { $set: { lastStatus: Date.now() } })
 
-            return res.sendStatus(200)
-            console.log("deu certo")
-        }
+        return res.sendStatus(200)
+        console.log("deu certo")
+    }
 
-        catch (erro){
-            console.log("deu errado")
+    catch (erro) {
+        console.log("deu errado")
 
-            return res.sendStatus(500)
-        }
+        return res.sendStatus(500)
+    }
 
 
 })
 
-app.post("/messages", async (req, res)=>{
-    try{
-            const message = await messageRules.validate(req.body)
-            const { user } = req.headers
-            const statusMessage = await db.collection("participants").findOne({name: user})
+app.post("/messages", async (req, res) => {
+    try {
+        const message = await messageRules.validate(req.body)
+        const { user } = req.headers
+        const statusMessage = await db.collection("participants").findOne({ name: user })
 
-            if(!statusMessage) return res.sendStatus(422)
+        if (!statusMessage) return res.status(422).send("Usuário não encontrado ou não registrado")
 
-            const messagePosted = await db.collection("messages").insertOne({
-                from: user,...message,
-                time: dayjs().format('HH:mm:ss')
+        const messagePosted = await db.collection("messages").insertOne({
+            from: user, ...message,
+            time: dayjs().format('HH:mm:ss')
 
-            })
+        })
 
-            if(messagePosted) return res.sendStatus(201)
+        if (messagePosted) return res.sendStatus(201)
 
-    }catch{
+    } catch (err) {
+        console.error(err)
 
-        console.log("deu ruim")
+        if (err.isJoi) return res.sendStatus(422)
 
-        if(err.isJoi) return res.sendStatus(422)
-
-        return res,sendStatus(500)
+        return res.sendStatus(500)
     }
 })
 
-app.get("/messages", async (req, res)=>{
-    try{
+app.get("/messages", async (req, res) => {
+    try {
         const { message } = req
         const { user } = req.headers
 
-        const messages = await db.collection("messages").find ({
-            $or:[
-                {from: user},
-                {to: user},
-                {to: "Todos"}
+        const messages = await db.collection("messages").find({
+            $or: [
+                { from: user },
+                { to: user },
+                { to: "Todos" }
             ]
         }).toArray()
 
-        if(message.limit){
+        if (message?.limit) {
 
-            const limitMessages = Number(message.limit)
+            const limitMessages = Number(message?.limit)
 
-            if(limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
+            if (limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
 
             return res.send([...messages].slice(-limitMessages).reverse())
         }
 
         return res.send([...messages].reverse())
-    } catch{
-        console.log("deu ruim")
+    } catch (erro) {
+        console.log(erro)
 
         return res.sendStatus(500)
     }
