@@ -52,7 +52,7 @@ app.post('/participants', async (req, res) => {
 
         if (err.isJoi) return res.sendStatus(422)
 
-        return res.sendStatus(201)
+        return res.sendStatus(500)
     }
 }) 
 
@@ -99,7 +99,7 @@ app.post("/messages", async (req, res)=>{
             const { user } = req.headers
             const statusMessage = await db.collection("participants").findOne({name: user})
 
-            if(!statusMessage) return res.sendStatus(201)
+            if(!statusMessage) return res.sendStatus(422)
 
             const messagePosted = await db.collection("messages").insertOne({
                 from: user,...message,
@@ -133,6 +133,7 @@ app.get("messages", async (req, res)=>{
         }).toArray()
 
         if(message.limit){
+
             const limitMessages = Number(message.limit)
 
             if(limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
