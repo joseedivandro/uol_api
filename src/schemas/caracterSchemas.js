@@ -1,8 +1,6 @@
 import Joi from '@hapi/joi';
 
-const participantRules = Joi.object({
-    name: Joi.string().min(1).required()
-})
+
 
 const messageRules = Joi.object({
     to: Joi.string().min(1).required(),

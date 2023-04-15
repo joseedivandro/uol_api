@@ -2,7 +2,8 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import { MongoClient, ObjectId } from "mongodb"
-import { participantRules, messageRules } from "./caracterSchemas.js"
+import { messageRules } from "./schemas/caracterSchemas"
+import { participantRules } from "./schemas/caracterSchemas"
 import dayjs from "dayjs"
 
 
@@ -22,9 +23,9 @@ timeAtividade()
 
 const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
-const dbWasConnected = await mongoClient.connect()
+const dbConnected = await mongoClient.connect()
 
-if (dbWasConnected) db = mongoClient.db()
+if (dbConnected) db = mongoClient.db()
 
 app.post("/participants", async (req, res) => {
 
