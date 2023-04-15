@@ -125,17 +125,17 @@ app.get("/messages", async (req, res) => {
         const { query } = req
         const { user } = req.headers
         
-        const allMessages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
+        const messages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
         
         if (query.limit) {
             const limitMessages = Number(query.limit)
 
             if (limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
             
-            return res.send([...allMessages].slice(-limitMessages).reverse())
+            return res.send([...messages].slice(-limitMessages).reverse())
         }        
 
-        return res.send([...allMessages].reverse())
+        return res.send([...messages].reverse())
 
     } catch (err) {
         console.log(err)
@@ -146,11 +146,10 @@ app.get("/messages", async (req, res) => {
 
 
 function timeAtividade() {
-    const timeTolerance = 10000 // * in milliseconds
-
+  
     setInterval(async () => {
 
-        const timeBottomLimit = Date.now() - timeTolerance
+        const timeBottomLimit = Date.now() - 10000
 
         try {
             const participants = await db.collection("participants").find().toArray()
@@ -177,5 +176,5 @@ function timeAtividade() {
             return res.sendStatus(500)
         }
 
-    }, timeTolerance)
+    }, 10000)
 }
