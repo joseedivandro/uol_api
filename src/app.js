@@ -21,9 +21,9 @@ timeAtividade()
 
 const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
-const dbConnected = await mongoClient.connect()
+const dbWasConnected = await mongoClient.connect()
 
-if (dbConnected) db = mongoClient.db()
+if (dbWasConnected) db = mongoClient.db()
 
 app.post("/participants", async (req, res) => {
 
@@ -32,11 +32,8 @@ app.post("/participants", async (req, res) => {
         const participant = await participantRules.validateAsync(req.body)
 
         const partipanteLocalizar = await db.collection("participants").findOne(participant)
-
         if (partipanteLocalizar) return res.sendStatus(409)
-
         await db.collection("participants").insertOne({ ...participant, lastStatus: Date.now() })
-
         await db.collection("messages").insertOne({
             from: participant.name,
             to: 'Todos',
@@ -46,29 +43,23 @@ app.post("/participants", async (req, res) => {
         })
 
         return res.sendStatus(201)
-
     } catch (err) {
         console.log(err)
-
         if (err.isJoi) return res.sendStatus(422)
-
         return res.sendStatus(500)
     }
 })
 
-app.get("/participants", async (res) => {
+app.get("/participants", async (req, res) => {
 
     try {
         const participants = await db.collection("participants").find().toArray()
-
         return res.send(participants)
-    } catch (erro) {
-        console.log(erro)
-
+    } catch (err) {
+        console.log(err)
         return res.sendStatus(500)
     }
 })
-
 app.post("/status", async (req, res) => {
 
     try {
@@ -110,10 +101,10 @@ app.post("/messages", async (req, res) => {
 
         if (messageWasPosted) return res.sendStatus(201)
 
-    } catch (erro) {
-        console.log(erro)
+    } catch (err) {
+        console.log(err)
 
-        if (erro.isJoi) return res.sendStatus(422)
+        if (err.isJoi) return res.sendStatus(422)
 
         return res.sendStatus(500)
     }
@@ -124,18 +115,18 @@ app.get("/messages", async (req, res) => {
     try {
         const { query } = req
         const { user } = req.headers
-        
-        const messages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
-        
+
+        const allMessages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
+
         if (query.limit) {
             const limitMessages = Number(query.limit)
 
             if (limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
-            
-            return res.send([...messages].slice(-limitMessages).reverse())
+
+            return res.send([...allMessages].slice(-limitMessages).reverse())
         }        
 
-        return res.send([...messages].reverse())
+        return res.send([...allMessages].reverse())
 
     } catch (err) {
         console.log(err)
@@ -146,35 +137,26 @@ app.get("/messages", async (req, res) => {
 
 
 function timeAtividade() {
-  
+
     setInterval(async () => {
-
-        const timeBottomLimit = Date.now() - 10000
-
+        const timeLimit = Date.now() - 15000
         try {
             const participants = await db.collection("participants").find().toArray()
-
             participants.forEach(async (participant) => {
-
-                if (participant.lastStatus < timeBottomLimit) {
-
+                if (participant.lastStatus < timeLimit) {
                     await db.collection("participants").deleteOne({ _id: new ObjectId(participant._id) })
-
                     await db.collection("messages").insertOne({
                         from: participant.name,
                         to: 'Todos',
                         text: 'sai da sala...',
                         type: 'status',
-                        time: dayjs(Date.now()).format('HH:mm:ss')
+                        time: dayjs().format('HH:mm:ss')
                     })
                 }
             })
-
-        } catch (err) {
-            console.log(err)
-
+        } catch (erro) {
+            console.log(erro)
             return res.sendStatus(500)
         }
-
-    }, 10000)
+    }, 15000)
 }
