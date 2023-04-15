@@ -68,3 +68,26 @@ app.get("/participants", async (req, res) => {
         return res.sendStatus(500)
     }
 })
+
+app.post("/status", async (req, res) =>{
+
+        try{
+            const { user } = req.headers
+            const statusUser = await db.collection("participants").findOne({name:user})
+
+            if(!statusUser) return res.sendStatus(404)
+
+            await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()} })
+
+            return res.sendStatus(200)
+            console.log("deu certo")
+        }
+
+        catch (erro){
+            console.log("deu errado")
+
+            return res.sendStatus(500)
+        }
+
+
+})
