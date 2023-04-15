@@ -2,21 +2,23 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import { MongoClient, ObjectId } from "mongodb"
+
 import { messageRules } from "./schemas/caracterSchemas"
 import { participantRules } from "./schemas/caracterSchemas"
-import dayjs from "dayjs"
 
+import dayjs from "dayjs"
+import { participantRules } from "./schemas/caracterSchemas.js"
+import { messageRules } from "./schemas/caracterSchemas.js"
 
 const PORT = 5000
 const app = express()
 let db
 
 dotenv.config()
-
 app.use(cors())
 app.use(express.json())
 app.listen(PORT, () => {
-    console.log(`Initialized server: port ${PORT}`)
+    console.log(`Servidor Rodando na porta:${PORT}`)
 })
 
 timeAtividade()
@@ -58,14 +60,14 @@ app.post("/participants", async (req, res) => {
     }
 })
 
-app.get("/participants", async (req, res) => {
+app.get("/participants", async (res) => {
 
     try {
         const participants = await db.collection("participants").find().toArray()
 
         return res.send(participants)
-    } catch (err) {
-        console.log(err)
+    } catch (erro) {
+        console.log(erro)
 
         return res.sendStatus(500)
     }
@@ -112,10 +114,10 @@ app.post("/messages", async (req, res) => {
 
         if (messageWasPosted) return res.sendStatus(201)
 
-    } catch (err) {
-        console.log(err)
+    } catch (erro) {
+        console.log(erro)
 
-        if (err.isJoi) return res.sendStatus(422)
+        if (erro.isJoi) return res.sendStatus(422)
 
         return res.sendStatus(500)
     }
@@ -127,17 +129,17 @@ app.get("/messages", async (req, res) => {
         const { query } = req
         const { user } = req.headers
         
-        const allMessages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
+        const messages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
         
         if (query.limit) {
             const limitMessages = Number(query.limit)
 
             if (limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
             
-            return res.send([...allMessages].slice(-limitMessages).reverse())
+            return res.send([...messages].slice(-limitMessages).reverse())
         }        
 
-        return res.send([...allMessages].reverse())
+        return res.send([...messages].reverse())
 
     } catch (err) {
         console.log(err)
@@ -148,36 +150,35 @@ app.get("/messages", async (req, res) => {
 
 
 function timeAtividade() {
-
+  
     setInterval(async () => {
 
-        const timeLimit = Date.now() - 15000
+        const timeBottomLimit = Date.now() - 10000
 
         try {
             const participants = await db.collection("participants").find().toArray()
 
             participants.forEach(async (participant) => {
 
-                if (participant.lastStatus < timeLimit) {
+                if (participant.lastStatus < timeBottomLimit) {
 
                     await db.collection("participants").deleteOne({ _id: new ObjectId(participant._id) })
-
 
                     await db.collection("messages").insertOne({
                         from: participant.name,
                         to: 'Todos',
                         text: 'sai da sala...',
                         type: 'status',
-                        time: dayjs().format('HH:mm:ss')
+                        time: dayjs(Date.now()).format('HH:mm:ss')
                     })
                 }
             })
 
-        } catch (erro) {
-            console.log(erro)
+        } catch (err) {
+            console.log(err)
 
             return res.sendStatus(500)
         }
 
-    }, 15000)
+    }, 10000)
 }
