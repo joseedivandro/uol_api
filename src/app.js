@@ -135,7 +135,7 @@ app.get("messages", async (req, res)=>{
         if(query.limit){
             const limitMessages = Number(message.limit)
 
-            if(limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(400)
+            if(limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
 
             return res.send([...messages].slice(-limitMessages).reverse())
         }
