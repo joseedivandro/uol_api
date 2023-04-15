@@ -99,7 +99,7 @@ app.post("/messages", async (req, res)=>{
             const { user } = req.headers
             const statusMessage = await db.collection("participants").findOne({name: user})
 
-            if(!statusMessage) return res.sendStatus(400)
+            if(!statusMessage) return res.sendStatus(422)
 
             const messagePosted = await db.collection("messages").insertOne({
                 from: user,...message,
@@ -107,13 +107,13 @@ app.post("/messages", async (req, res)=>{
 
             })
 
-            if(messagePosted) return res.sendStatus(200)
+            if(messagePosted) return res.sendStatus(201)
 
     }catch{
 
         console.log("deu ruim")
 
-        if(err.isJoi) return res.sendStatus(400)
+        if(err.isJoi) return res.sendStatus(422)
 
         return res,sendStatus(500)
     }
@@ -122,7 +122,7 @@ app.post("/messages", async (req, res)=>{
 app.get("messages", async (req, res)=>{
     try{
         const { message } = req
-        const { user } = req,headers
+        const { user } = req.headers
 
         const messages = await db.collection("messages").find ({
             $or:[
