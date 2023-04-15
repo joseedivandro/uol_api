@@ -18,7 +18,7 @@ app.listen(PORT, () => {
     console.log(`Initialized server: port ${PORT}`)
 })
 
-
+timeAtividade()
 
 const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
@@ -148,3 +148,38 @@ app.get("messages", async (req, res)=>{
         return res.sendStatus(500)
     }
 })
+
+function timeAtividade() {
+
+    setInterval(async () => {
+
+        const timeLimit = Date.now() - 15000
+
+        try {
+            const participants = await db.collection("participants").find().toArray()
+
+            participants.forEach(async (participant) => {
+
+                if (participant.lastStatus < timeLimit) {
+
+                    await db.collection("participants").deleteOne({ _id: new ObjectId(participant._id) })
+
+
+                    await db.collection("messages").insertOne({
+                        from: participant.name,
+                        to: 'Todos',
+                        text: 'sai da sala...',
+                        type: 'status',
+                        time: dayjs().format('HH:mm:ss')
+                    })
+                }
+            })
+
+        } catch (erro) {
+            console.log(erro)
+
+            return res.sendStatus(500)
+        }
+
+    }, 15000)
+}
