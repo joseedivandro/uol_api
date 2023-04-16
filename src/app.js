@@ -21,9 +21,9 @@ timeAtividade()
 
 const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
-const dbWasConnected = await mongoClient.connect()
+const dbConnected = await mongoClient.connect()
 
-if (dbWasConnected) db = mongoClient.db()
+if (dbConnected) db = mongoClient.db()
 
 app.post("/participants", async (req, res) => {
 
@@ -113,20 +113,20 @@ app.post("/messages", async (req, res) => {
 app.get("/messages", async (req, res) => {
 
     try {
-        const { query } = req
+   
         const { user } = req.headers
 
-        const allMessages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
+        const messages = await db.collection("messages").find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
 
-        if (query.limit) {
-            const limitMessages = Number(query.limit)
+        if (req.limit) {
+            const limitMessages = Number(req.limit)
 
             if (limitMessages < 1 || isNaN(limitMessages)) return res.sendStatus(422)
 
-            return res.send([...allMessages].slice(-limitMessages).reverse())
+            return res.send([...messages].slice(-limitMessages).reverse())
         }        
 
-        return res.send([...allMessages].reverse())
+        return res.send([...messages].reverse())
 
     } catch (err) {
         console.log(err)
